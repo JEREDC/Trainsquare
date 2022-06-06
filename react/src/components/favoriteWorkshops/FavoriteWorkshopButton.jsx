@@ -1,0 +1,87 @@
+import React, { useEffect, useState } from 'react';
+import debug from 'sabio-debug';
+import PropTypes from 'prop-types';
+import { addFavorite, getFavoriteWorkshopIds, deleteFavorite } from '../../services/favoriteWorkshopService';
+import heart from '../../assets/images/favorite/heart.svg';
+import heartFill from '../../assets/images/favorite/heart-fill.svg';
+import './FavoriteWorkshops.css';
+
+const _logger = debug.extend('Favorites');
+
+function FavoriteWorkshopButton(props) {
+    const id = props.data;
+    _logger('favorite workshop button', id);
+
+    let userFavorites = [];
+
+    const [buttonImage, setButtonImage] = useState({ heart });
+    const [isFavorite, setIsFavorite] = useState(false);
+
+    useEffect(() => {
+        getFavoriteWorkshopIds().then(ongetFavoriteWorkshopIdsSuccess).catch(onFavoriteError);
+    }, [isFavorite]);
+
+    useEffect(() => {
+        updateFavoriteButton();
+    }, [isFavorite]);
+
+    const onFavoriteClicked = () => {
+        if (isFavorite) {
+            deleteFavorite(id).then(onFavoriteDeleted).catch(onFavoriteError);
+        } else {
+            let payload = { workShopId: id };
+            addFavorite(payload).then(onFavoriteAdded).catch(onFavoriteError);
+        }
+    };
+
+    const updateFavoriteButton = () => {
+        if (isFavorite) {
+            setButtonImage(heartFill);
+            setIsFavorite(true);
+        } else {
+            setButtonImage(heart);
+            setIsFavorite(false);
+        }
+    };
+
+    const onFavoriteAdded = () => {
+        setIsFavorite(true);
+    };
+
+    const onFavoriteDeleted = () => {
+        setIsFavorite(false);
+    };
+
+    const ongetFavoriteWorkshopIdsSuccess = (response) => {
+        for (let i = 0; i < response.item.length; i++) {
+            userFavorites.push(response.item[i].id);
+        }
+
+        for (let i = 0; i < userFavorites.length; i++) {
+            if (id === userFavorites[i]) {
+                setIsFavorite(true);
+                break;
+            }
+        }
+    };
+
+    const onFavoriteError = (response) => {
+        _logger(response);
+    };
+
+    return (
+        <React.Fragment>
+            <button onClick={onFavoriteClicked} className="favorite-btn">
+                <img src={buttonImage} alt="favorite" />
+            </button>
+        </React.Fragment>
+    );
+}
+
+FavoriteWorkshops.propTypes = {
+    data: PropTypes.shape({
+        id: PropTypes.number.isRequired,
+    }),
+};
+
+export default FavoriteWorkshops;
