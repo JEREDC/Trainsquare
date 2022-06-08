@@ -62,6 +62,4 @@ BEGIN
 	OFFSET @offset Rows
 	FETCH NEXT @PageSize Rows Only
 
-
-
 END
