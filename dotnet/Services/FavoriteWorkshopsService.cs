@@ -1,271 +1,254 @@
-﻿using Sabio.Data;
-using Sabio.Data.Providers;
-using Sabio.Models;
-using Sabio.Models.Domain;
-using Sabio.Models.Requests;
-using Sabio.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Sabio.Services
+public class FavoriteWorkshopsService : IFavoriteWorkshopService
 {
-    public class FavoriteWorkshopsService : IFavoriteWorkshopService
+    IDataProvider _data = null;
+    IUserMapper _userMapper = null;
+
+    public FavoriteWorkshopsService(IDataProvider data, IUserMapper mapper, ILookUp lookMapper)
     {
-        IDataProvider _data = null;
-        IUserMapper _userMapper = null;
+        _data = data;
+        _userMapper = mapper;
+    }
 
-        public FavoriteWorkshopsService(IDataProvider data, IUserMapper mapper, ILookUp lookMapper)
-        {
-            _data = data;
-            _userMapper = mapper;
-        }
+    public int Add(FavoriteWorkshopAddRequest model, int userId)
+    {
+        int id = 0;
 
-        public int Add(FavoriteWorkshopAddRequest model, int userId)
-        {
-            int id = 0;
-
-            string procName = "[dbo].[FavoriteWorkshops_Insert]";
-            _data.ExecuteNonQuery(procName,
-                inputParamMapper: delegate (SqlParameterCollection col)
-                {
-                    AddCommonParams(model, col, userId);
-
-                    SqlParameter idOut = new SqlParameter("@Id", SqlDbType.Int);
-                    idOut.Direction = ParameterDirection.Output;
-
-                    col.Add(idOut);
-                },
-                returnParameters: delegate (SqlParameterCollection returnCol)
-                {
-                    object oId = returnCol["@Id"].Value;
-                    int.TryParse(oId.ToString(), out id);
-                });
-            return id;
-
-        }
-
-        public Paged<WorkShop> GetAllByUserId(int userId, int pageIndex, int pageSize)
-        {
-            Paged<WorkShop> pagedList = null;
-            List<WorkShop> list = null;
-            int totalCount = 0;
-
-            string procName = "[dbo].[FavoriteWorkshops_Select_ByUserId]";
-
-            _data.ExecuteCmd(procName, (param) =>
+        string procName = "[dbo].[FavoriteWorkshops_Insert]";
+        _data.ExecuteNonQuery(procName,
+            inputParamMapper: delegate (SqlParameterCollection col)
             {
-                param.AddWithValue("@UserId", userId);
-                param.AddWithValue("@PageIndex", pageIndex);
-                param.AddWithValue("@PageSize", pageSize);
+                AddCommonParams(model, col, userId);
+
+                SqlParameter idOut = new SqlParameter("@Id", SqlDbType.Int);
+                idOut.Direction = ParameterDirection.Output;
+
+                col.Add(idOut);
             },
-            (reader, recordSetIndex) =>
+            returnParameters: delegate (SqlParameterCollection returnCol)
             {
-                int startingIndex = 0;
-                WorkShop workShop = MapWorkShop(reader, ref startingIndex);
-                if (totalCount == 0)
-                {
-                    totalCount = reader.GetSafeInt32(startingIndex++);
-                }
-                if (list == null)
-                {
-                    list = new List<WorkShop>();
-                }
-                list.Add(workShop);
+                object oId = returnCol["@Id"].Value;
+                int.TryParse(oId.ToString(), out id);
             });
-            if(list != null)
-            {
-                pagedList = new Paged<WorkShop>(list, pageIndex, pageSize, totalCount);
-            }
-            return pagedList;
-        }
+        return id;
 
-        public Paged<WorkshopWithFavoriteCount> GetAllFavoriteWorkshops(int pageIndex, int pageSize)
+    }
+
+    public Paged<WorkShop> GetAllByUserId(int userId, int pageIndex, int pageSize)
+    {
+        Paged<WorkShop> pagedList = null;
+        List<WorkShop> list = null;
+        int totalCount = 0;
+
+        string procName = "[dbo].[FavoriteWorkshops_Select_ByUserId]";
+
+        _data.ExecuteCmd(procName, (param) =>
         {
-            Paged<WorkshopWithFavoriteCount > pagedList = null;
-            List <WorkshopWithFavoriteCount> list = null;
-            int totalCount = 0;
-
-            string procName = "[dbo].[FavoriteWorkshops_SelectAll]";
-
-            _data.ExecuteCmd(procName, (param) =>
+            param.AddWithValue("@UserId", userId);
+            param.AddWithValue("@PageIndex", pageIndex);
+            param.AddWithValue("@PageSize", pageSize);
+        },
+        (reader, recordSetIndex) =>
+        {
+            int startingIndex = 0;
+            WorkShop workShop = MapWorkShop(reader, ref startingIndex);
+            if (totalCount == 0)
             {
-                param.AddWithValue("@PageIndex", pageIndex);
-                param.AddWithValue("@PageSize", pageSize);
-            },
+                totalCount = reader.GetSafeInt32(startingIndex++);
+            }
+            if (list == null)
+            {
+                list = new List<WorkShop>();
+            }
+            list.Add(workShop);
+        });
+        if(list != null)
+        {
+            pagedList = new Paged<WorkShop>(list, pageIndex, pageSize, totalCount);
+        }
+        return pagedList;
+    }
+
+    public Paged<WorkshopWithFavoriteCount> GetAllFavoriteWorkshops(int pageIndex, int pageSize)
+    {
+        Paged<WorkshopWithFavoriteCount > pagedList = null;
+        List <WorkshopWithFavoriteCount> list = null;
+        int totalCount = 0;
+
+        string procName = "[dbo].[FavoriteWorkshops_SelectAll]";
+
+        _data.ExecuteCmd(procName, (param) =>
+        {
+            param.AddWithValue("@PageIndex", pageIndex);
+            param.AddWithValue("@PageSize", pageSize);
+        },
+        (reader, recordSetIndex) =>
+        {
+            int startingIndex = 0;
+            WorkshopWithFavoriteCount workshop = MapFavoriteCountWorkshop(reader, ref startingIndex);
+            if (totalCount == 0)
+            {
+                totalCount = reader.GetSafeInt32(startingIndex++);
+            }
+            if (list == null)
+            {
+                list = new List<WorkshopWithFavoriteCount>();
+            }
+            list.Add(workshop);
+        });
+        if(list != null)
+        {
+            pagedList = new Paged<WorkshopWithFavoriteCount>(list, pageIndex, pageSize, totalCount);
+        }
+        return pagedList;
+    }
+
+    public Paged<WorkshopWithFavoriteCount> Search(int pageIndex, int pageSize, string query)
+    {
+        Paged<WorkshopWithFavoriteCount> pagedList = null;
+        List<WorkshopWithFavoriteCount> list = null;
+        int totalCount = 0;
+
+        string procName = "[dbo].[FavoriteWorkshops_Select_ByQuery]";
+
+        _data.ExecuteCmd(procName, (inputParamMapper) =>
+        {
+            inputParamMapper.AddWithValue("@PageIndex", pageIndex);
+            inputParamMapper.AddWithValue("@PageSize", pageSize);
+            inputParamMapper.AddWithValue("@Query", query);
+        },
             (reader, recordSetIndex) =>
             {
                 int startingIndex = 0;
-                WorkshopWithFavoriteCount workshop = MapFavoriteCountWorkshop(reader, ref startingIndex);
+
+                WorkshopWithFavoriteCount surveys = MapFavoriteCountWorkshop(reader, ref startingIndex);
+
                 if (totalCount == 0)
                 {
-                    totalCount = reader.GetSafeInt32(startingIndex++);
+                    reader.GetSafeInt32(startingIndex++);
                 }
+
                 if (list == null)
                 {
                     list = new List<WorkshopWithFavoriteCount>();
                 }
-                list.Add(workshop);
-            });
-            if(list != null)
-            {
-                pagedList = new Paged<WorkshopWithFavoriteCount>(list, pageIndex, pageSize, totalCount);
+                list.Add(surveys);
             }
-            return pagedList;
-        }
-
-        public Paged<WorkshopWithFavoriteCount> Search(int pageIndex, int pageSize, string query)
+            );
+        if (list != null)
         {
-            Paged<WorkshopWithFavoriteCount> pagedList = null;
-            List<WorkshopWithFavoriteCount> list = null;
-            int totalCount = 0;
+            pagedList = new Paged<WorkshopWithFavoriteCount>(list, pageIndex, pageSize, totalCount);
+        }
+        return pagedList;
+    }
 
-            string procName = "[dbo].[FavoriteWorkshops_Select_ByQuery]";
+    public List<WorkshopId> GetFavoriteWorkshopIds(int userId)
+    {
+        List<WorkshopId> list = null;
+        int totalCount = 0;
 
-            _data.ExecuteCmd(procName, (inputParamMapper) =>
+        string procName = "[dbo].[FavoriteWorkshops_SelectWorkShopIds_ByUserId]";
+
+        _data.ExecuteCmd(procName, (param) =>
+        {
+            param.AddWithValue("UserId", userId);
+        },
+        (reader, recordSetIndex) =>
+        {
+            int startingIndex = 0;
+            WorkshopId workshopId = MapWorkshopIds(reader, startingIndex);
+
+            if(totalCount == 0)
             {
-                inputParamMapper.AddWithValue("@PageIndex", pageIndex);
-                inputParamMapper.AddWithValue("@PageSize", pageSize);
-                inputParamMapper.AddWithValue("@Query", query);
-            },
-                (reader, recordSetIndex) =>
-                {
-                    int startingIndex = 0;
-
-                    WorkshopWithFavoriteCount surveys = MapFavoriteCountWorkshop(reader, ref startingIndex);
-
-                    if (totalCount == 0)
-                    {
-                        reader.GetSafeInt32(startingIndex++);
-                    }
-
-                    if (list == null)
-                    {
-                        list = new List<WorkshopWithFavoriteCount>();
-                    }
-                    list.Add(surveys);
-                }
-                );
-            if (list != null)
-            {
-                pagedList = new Paged<WorkshopWithFavoriteCount>(list, pageIndex, pageSize, totalCount);
+                totalCount=reader.GetSafeInt32(startingIndex++);
             }
-            return pagedList;
-        }
-
-        public List<WorkshopId> GetFavoriteWorkshopIds(int userId)
-        {
-            List<WorkshopId> list = null;
-            int totalCount = 0;
-
-            string procName = "[dbo].[FavoriteWorkshops_SelectWorkShopIds_ByUserId]";
-
-            _data.ExecuteCmd(procName, (param) =>
+            if(list == null)
             {
-                param.AddWithValue("UserId", userId);
-            },
-            (reader, recordSetIndex) =>
-            {
-                int startingIndex = 0;
-                WorkshopId workshopId = MapWorkshopIds(reader, startingIndex);
-
-                if(totalCount == 0)
-                {
-                    totalCount=reader.GetSafeInt32(startingIndex++);
-                }
-                if(list == null)
-                {
-                    list = new List<WorkshopId>();
-                }
-                list.Add(workshopId);
-            });
-            if(list != null)
-            {
-                return list;
+                list = new List<WorkshopId>();
             }
-            return null;
-        }
-
-        public void Delete(int workShopId, int userId)
+            list.Add(workshopId);
+        });
+        if(list != null)
         {
-            string procName = "[dbo].[FavoriteWorkshops_Delete_ById]";
-            _data.ExecuteNonQuery(procName, inputParamMapper: delegate (SqlParameterCollection collection)
-            {
-                collection.AddWithValue("@WorkShopId", workShopId);
-                collection.AddWithValue("@UserId", userId);
-            }, returnParameters: null);
+            return list;
         }
+        return null;
+    }
 
-    
-
-        private WorkShop MapWorkShop(IDataReader reader, ref int startingIndex)
+    public void Delete(int workShopId, int userId)
+    {
+        string procName = "[dbo].[FavoriteWorkshops_Delete_ById]";
+        _data.ExecuteNonQuery(procName, inputParamMapper: delegate (SqlParameterCollection collection)
         {
-            WorkShop workShop = new WorkShop();
+            collection.AddWithValue("@WorkShopId", workShopId);
+            collection.AddWithValue("@UserId", userId);
+        }, returnParameters: null);
+    }
 
-            workShop.Id = reader.GetSafeInt32(startingIndex++);
-            workShop.Name = reader.GetSafeString(startingIndex++);
-            workShop.Summary = reader.GetSafeString(startingIndex++);
-            workShop.ShortDescription = reader.GetSafeString(startingIndex++);
-            workShop.VenueId = reader.GetSafeInt32(startingIndex++);
-            workShop.Host = _userMapper.Map(reader, ref startingIndex);
-            workShop.WorkShopType = reader.GetSafeString(startingIndex++);
-            workShop.WorkShopStatus = reader.GetSafeString(startingIndex++);
-            workShop.ImageUrl = reader.GetSafeString(startingIndex++);
-            workShop.ExternalSiteUrl = reader.GetSafeString(startingIndex++);
-            workShop.LanguageId = reader.GetSafeInt32(startingIndex++);
-            workShop.IsFree = reader.GetSafeBool(startingIndex++);
-            workShop.NumberOfSessions = reader.GetSafeInt32(startingIndex++);
-            workShop.DateStart = reader.GetDateTime(startingIndex++);
-            workShop.DateEnd = reader.GetDateTime(startingIndex++);
-            workShop.DateCreated = reader.GetDateTime(startingIndex++);
-            workShop.DateModified = reader.GetDateTime(startingIndex++);
 
-            return workShop;
-        }
 
-        private WorkshopWithFavoriteCount MapFavoriteCountWorkshop(IDataReader reader, ref int startingIndex)
-        {
-            WorkshopWithFavoriteCount workShop = new WorkshopWithFavoriteCount();
+    private WorkShop MapWorkShop(IDataReader reader, ref int startingIndex)
+    {
+        WorkShop workShop = new WorkShop();
 
-            workShop.Id = reader.GetSafeInt32(startingIndex++);
-            workShop.TotalFavorited = reader.GetSafeInt32(startingIndex++);
-            workShop.Name = reader.GetSafeString(startingIndex++);
-            workShop.Summary = reader.GetSafeString(startingIndex++);
-            workShop.ShortDescription = reader.GetSafeString(startingIndex++);
-            workShop.VenueId = reader.GetSafeInt32(startingIndex++);
-            workShop.Host = _userMapper.Map(reader, ref startingIndex);
-            workShop.WorkShopType = reader.GetSafeString(startingIndex++);
-            workShop.WorkShopStatus = reader.GetSafeString(startingIndex++);
-            workShop.ImageUrl = reader.GetSafeString(startingIndex++);
-            workShop.ExternalSiteUrl = reader.GetSafeString(startingIndex++);
-            workShop.LanguageId = reader.GetSafeInt32(startingIndex++);
-            workShop.IsFree = reader.GetSafeBool(startingIndex++);
-            workShop.NumberOfSessions = reader.GetSafeInt32(startingIndex++);
-            workShop.DateStart = reader.GetDateTime(startingIndex++);
-            workShop.DateEnd = reader.GetDateTime(startingIndex++);
-            workShop.DateCreated = reader.GetDateTime(startingIndex++);
-            workShop.DateModified = reader.GetDateTime(startingIndex++);
+        workShop.Id = reader.GetSafeInt32(startingIndex++);
+        workShop.Name = reader.GetSafeString(startingIndex++);
+        workShop.Summary = reader.GetSafeString(startingIndex++);
+        workShop.ShortDescription = reader.GetSafeString(startingIndex++);
+        workShop.VenueId = reader.GetSafeInt32(startingIndex++);
+        workShop.Host = _userMapper.Map(reader, ref startingIndex);
+        workShop.WorkShopType = reader.GetSafeString(startingIndex++);
+        workShop.WorkShopStatus = reader.GetSafeString(startingIndex++);
+        workShop.ImageUrl = reader.GetSafeString(startingIndex++);
+        workShop.ExternalSiteUrl = reader.GetSafeString(startingIndex++);
+        workShop.LanguageId = reader.GetSafeInt32(startingIndex++);
+        workShop.IsFree = reader.GetSafeBool(startingIndex++);
+        workShop.NumberOfSessions = reader.GetSafeInt32(startingIndex++);
+        workShop.DateStart = reader.GetDateTime(startingIndex++);
+        workShop.DateEnd = reader.GetDateTime(startingIndex++);
+        workShop.DateCreated = reader.GetDateTime(startingIndex++);
+        workShop.DateModified = reader.GetDateTime(startingIndex++);
 
-            return workShop;
-        }
+        return workShop;
+    }
 
-        private WorkshopId MapWorkshopIds(IDataReader reader, int startingIndex)
-        {
-            WorkshopId workshopId = new WorkshopId();
+    private WorkshopWithFavoriteCount MapFavoriteCountWorkshop(IDataReader reader, ref int startingIndex)
+    {
+        WorkshopWithFavoriteCount workShop = new WorkshopWithFavoriteCount();
 
-            workshopId.Id = reader.GetSafeInt32(startingIndex++);
+        workShop.Id = reader.GetSafeInt32(startingIndex++);
+        workShop.TotalFavorited = reader.GetSafeInt32(startingIndex++);
+        workShop.Name = reader.GetSafeString(startingIndex++);
+        workShop.Summary = reader.GetSafeString(startingIndex++);
+        workShop.ShortDescription = reader.GetSafeString(startingIndex++);
+        workShop.VenueId = reader.GetSafeInt32(startingIndex++);
+        workShop.Host = _userMapper.Map(reader, ref startingIndex);
+        workShop.WorkShopType = reader.GetSafeString(startingIndex++);
+        workShop.WorkShopStatus = reader.GetSafeString(startingIndex++);
+        workShop.ImageUrl = reader.GetSafeString(startingIndex++);
+        workShop.ExternalSiteUrl = reader.GetSafeString(startingIndex++);
+        workShop.LanguageId = reader.GetSafeInt32(startingIndex++);
+        workShop.IsFree = reader.GetSafeBool(startingIndex++);
+        workShop.NumberOfSessions = reader.GetSafeInt32(startingIndex++);
+        workShop.DateStart = reader.GetDateTime(startingIndex++);
+        workShop.DateEnd = reader.GetDateTime(startingIndex++);
+        workShop.DateCreated = reader.GetDateTime(startingIndex++);
+        workShop.DateModified = reader.GetDateTime(startingIndex++);
 
-            return workshopId;
-        }
+        return workShop;
+    }
 
-        private static void AddCommonParams(FavoriteWorkshopAddRequest model, SqlParameterCollection col, int userId)
-        {
-            col.AddWithValue("@UserId", userId);
-            col.AddWithValue("@WorkShopId", model.WorkShopId);
-        }
+    private WorkshopId MapWorkshopIds(IDataReader reader, int startingIndex)
+    {
+        WorkshopId workshopId = new WorkshopId();
+
+        workshopId.Id = reader.GetSafeInt32(startingIndex++);
+
+        return workshopId;
+    }
+
+    private static void AddCommonParams(FavoriteWorkshopAddRequest model, SqlParameterCollection col, int userId)
+    {
+        col.AddWithValue("@UserId", userId);
+        col.AddWithValue("@WorkShopId", model.WorkShopId);
     }
 }
