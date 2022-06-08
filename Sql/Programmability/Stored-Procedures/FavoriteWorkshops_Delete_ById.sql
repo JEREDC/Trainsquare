@@ -1,6 +1,6 @@
 ALTER proc [dbo].[FavoriteWorkshops_Delete_ById]
-				@WorkShopId int,
-				@UserId int
+		@WorkShopId int,
+		@UserId int
 
 
 /*-----------     TEST CODE      ---------------
@@ -11,11 +11,10 @@ ALTER proc [dbo].[FavoriteWorkshops_Delete_ById]
 	Declare @Id int = 2
 		   
 	Execute [dbo].[FavoriteWorkshops_Delete_ById] 
-		   @Id
+		 @Id
 		  
 	SELECT *
 	FROM dbo.FavoriteWorkshops
-
 
 */
 
@@ -23,8 +22,8 @@ as
 
 BEGIN
 
-DELETE FROM [dbo].[FavoriteWorkshops]
-      WHERE WorkShopId = @WorkShopId 
-		AND UserId = @UserId
+	DELETE FROM [dbo].[FavoriteWorkshops]
+	WHERE WorkShopId = @WorkShopId 
+	AND UserId = @UserId
 
 END
