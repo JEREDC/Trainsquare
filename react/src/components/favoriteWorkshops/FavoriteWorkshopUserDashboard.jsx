@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, Pagination, Modal, Row, Col } from 'react-bootstrap';
+import { Card, Table, Button, Modal, Row, Col } from 'react-bootstrap';
 import debug from 'sabio-debug';
 import propTypes from 'prop-types';
 import CardTitle from '../dashboard/user/cardtitles/CardTitle';
@@ -7,11 +7,13 @@ import WorkShopsSearch from '../dashboard/user/workshops/WorkShopsSearch';
 import * as favoriteWorkshopService from '../../services/favoriteWorkshopService';
 import '../dashboard/user/userDashboard.css';
 import './FavoriteWorkshops.css';
-import FavoriteHostsButton from '../dashboard/user/favoritehosts/FavoriteHostButton';
+import FavoriteWorkshopsButton from './FavoriteWorkshops';
+import Pagination from 'rc-pagination';
+import locale from 'rc-pagination/lib/locale/en_US';
 
 const _logger = debug.extend('FavoriteWorkshop');
 
-const Workshops = (props) => {
+const FavoriteWorkshops = (props) => {
     _logger('props', props);
 
     const [userInput, setUserInput] = useState('');
@@ -19,6 +21,7 @@ const Workshops = (props) => {
         currentPage: 1,
         pageIndex: 0,
         pageSize: 5,
+        totalPages: 0,
         workshops: [],
     });
 
@@ -130,6 +133,7 @@ const Workshops = (props) => {
             <tr key={`id, ${id}`}>
                 <td>
                     <h5 className="font-14 my-1">
+                        <FavoriteWorkshopsButton data={aWorkshop.id} />
                         <span className="text-body">{name}</span>
                     </h5>
                     <span className="text-muted font-13">Start on {start}</span>
@@ -151,7 +155,6 @@ const Workshops = (props) => {
                 </td>
                 <td>
                     <span className="text-muted font-13">Host By</span>
-                    <FavoriteHostsButton data={aWorkshop.id} />
                     <h5 className="font-14 mt-1 fw-normal">
                         {host.firstName} {host.lastName}
                     </h5>
@@ -167,6 +170,20 @@ const Workshops = (props) => {
                 </td>
             </tr>
         );
+    };
+
+    const onChange = (page) => {
+        favoriteWorkshopService
+            .getUserFavoriteWorkshops(page - 1, favoriteWorkshops.pageSize)
+            .then(onGetFavoriteWorkshopsSuccess)
+            .catch(onGetFavoriteWorkshopsError);
+
+        setFavoriteWorkshops((prevState) => {
+            let newState = { ...prevState };
+            newState.currentPage = page;
+
+            return newState;
+        });
     };
 
     return (
@@ -186,13 +203,14 @@ const Workshops = (props) => {
                     </div>
                 </Card.Body>
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <Pagination>
-                        <Pagination.First />
-                        <Pagination.Prev />
-                        <Pagination.Item active>{1}</Pagination.Item>
-                        <Pagination.Next />
-                        <Pagination.Last />
-                    </Pagination>
+                    <Row className="text-center m-3">
+                        <Pagination
+                            onChange={onChange}
+                            currentPage={favoriteWorkshops.currentPage}
+                            total={favoriteWorkshops.totalPages * 10}
+                            locale={locale}
+                        />
+                    </Row>
                 </div>
             </Card>
             <Modal show={info} onHide={toggle} size={size} scrollable={scroll}>
@@ -241,8 +259,8 @@ const Workshops = (props) => {
     );
 };
 
-Workshops.propTypes = {
+FavoriteWorkshops.propTypes = {
     setUptotal: propTypes.func,
 };
 
-export default Workshops;
+export default FavoriteWorkshops;
