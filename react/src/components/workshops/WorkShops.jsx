@@ -28,12 +28,12 @@ const WorkShops = () => {
     useEffect(() => {
         if (searchInput.length > 0) {
             inventoryService
-                .paginateV2Search(inventoryData.currentPage, inventoryData.pageSize, searchInput)
+                .paginateSearch(inventoryData.currentPage, inventoryData.pageSize, searchInput)
                 .then(onGetWorkShopSuccess)
                 .catch(onGetWorkShopError);
         } else {
             inventoryService
-                .paginateV2(inventoryData.currentPage, inventoryData.pageSize)
+                .paginate(inventoryData.currentPage, inventoryData.pageSize)
                 .then(onGetWorkShopSuccess)
                 .catch(onGetWorkShopError);
         }
@@ -74,7 +74,7 @@ const WorkShops = () => {
 
     const onChange = (page) => {
         inventoryService
-            .paginateV2(page - 1, inventoryData.pageSize)
+            .paginate(page - 1, inventoryData.pageSize)
             .then(onGetWorkShopSuccess)
             .catch(onGetWorkShopError);
 
