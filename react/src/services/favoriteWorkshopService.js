@@ -1,13 +1,14 @@
 import axios from 'axios';
 import { API_HOST_PREFIX, onGlobalSuccess, onGlobalError } from './serviceHelpers';
-// import debug from 'sabio-degug';
 
-// const _logger = debug.extend('workShopService');
+const favoriteWorkshop = {
+    endpoint: `${API_HOST_PREFIX}/api/favoriteWorkshops`,
+};
 
 const addFavorite = (payload) => {
     const config = {
         method: 'POST',
-        url: `${API_HOST_PREFIX}/api/favoriteWorkshops`,
+        url: `${favoriteWorkshop.endpoint}`,
         data: payload,
         withCredentials: true,
         crossdomain: true,
@@ -19,18 +20,7 @@ const addFavorite = (payload) => {
 const getUserFavoriteWorkshops = (pageIndex, pageSize) => {
     const config = {
         method: 'GET',
-        url: `${API_HOST_PREFIX}/api/favoriteWorkshops/current?pageIndex=${pageIndex}&pageSize=${pageSize}`,
-        withCredentials: true,
-        crossdomain: true,
-        headers: { 'Content-Type': 'application/json' },
-    };
-    return axios(config).then(onGlobalSuccess).catch(onGlobalError);
-};
-
-const getAllFavoriteWorkshops = (pageIndex, pageSize) => {
-    const config = {
-        method: 'GET',
-        url: `${API_HOST_PREFIX}/api/favoriteWorkshops/topFavorited?pageIndex=${pageIndex}&pageSize=${pageSize}`,
+        url: `${favoriteWorkshop.endpoint}/current?pageIndex=${pageIndex}&pageSize=${pageSize}`,
         withCredentials: true,
         crossdomain: true,
         headers: { 'Content-Type': 'application/json' },
@@ -41,7 +31,7 @@ const getAllFavoriteWorkshops = (pageIndex, pageSize) => {
 const search = (pageIndex, pageSize, query) => {
     const config = {
         method: 'GET',
-        url: `${API_HOST_PREFIX}/api/favoriteWorkshops/search?pageIndex=${pageIndex}&pageSize=${pageSize}&query=${query}`,
+        url: `${favoriteWorkshop.endpoint}/search?pageIndex=${pageIndex}&pageSize=${pageSize}&query=${query}`,
         crossdomain: true,
         withCredentials: true,
         headers: { 'Content-Type': 'application/json' },
@@ -52,7 +42,7 @@ const search = (pageIndex, pageSize, query) => {
 const getFavoriteWorkshopIds = () => {
     const config = {
         method: 'GET',
-        url: `${API_HOST_PREFIX}/api/favoriteWorkshops/favoriteWorkShopIds`,
+        url: `${favoriteWorkshop.endpoint}/favoriteWorkShopIds`,
         withCredentials: true,
         crossdomain: true,
         headers: { 'Content-Type': 'application/json' },
@@ -63,7 +53,7 @@ const getFavoriteWorkshopIds = () => {
 const deleteFavorite = (id) => {
     const config = {
         method: 'DELETE',
-        url: `${API_HOST_PREFIX}/api/favoriteWorkshops/${id}`,
+        url: `${favoriteWorkshop.endpoint}/${id}`,
         withCredentials: true,
         crossdomain: true,
         headers: { 'Content-Type': 'application/json' },
@@ -76,6 +66,5 @@ export {
     getUserFavoriteWorkshops,
     getFavoriteWorkshopIds,
     deleteFavorite,
-    getAllFavoriteWorkshops,
     search,
 };
