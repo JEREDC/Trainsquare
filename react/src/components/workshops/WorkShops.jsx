@@ -15,8 +15,6 @@ const WorkShops = () => {
     const [inventoryData, setInventoryData] = useState({
         inventory: [],
         inventoryComponents: [],
-        workshopsRandom: [],
-        workshopRandomComponents: [],
         currentPage: 0,
         pageSize: 3,
         totalPages: 0,
